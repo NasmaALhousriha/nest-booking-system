@@ -118,5 +118,20 @@
         "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-16T10:00:00.000Z\"\n}"
       }
     }
+  
+  {
+  "method": "POST",
+  "url": "http://localhost:3000/bookings",
+  "name": "10. Failure - Patient Not Found (Unregistered Patient ID)",
+  "headers": [
+    { "name": "user-role", "value": "PATIENT" },
+    { "name": "user-id", "value": "10000" }
+  ],
+  "body": {
+    "type": "json",
+    "raw": "{\n  \"doctorId\": 2,\n  \"appointmentTime\": \"2026-09-14T11:00:00.000Z\"\n}"
+  }
+
+}
   ]
 }

@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerMiddleware } from './common/middleware/logger.middleware.js';
 import { BookingModule } from './booking/booking.module.js';
 import { DoctorModule } from './doctor/doctor.module.js';
+import { PatientModule } from './patient/patient.module.js';
 
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -16,6 +17,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     
       BookingModule,
       DoctorModule,
+      PatientModule,
 
     
   ],

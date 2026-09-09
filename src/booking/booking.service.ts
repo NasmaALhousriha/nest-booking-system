@@ -2,15 +2,24 @@ import { Injectable, BadRequestException, ConflictException, NotFoundException }
 import { CreateBookingDto } from './dto/create-booking.dto.js';
 import { Booking } from './entities/booking.entity.js';
 import { DoctorsService } from '../doctor/doctor.service.js';
+import { PatientService } from '../patient/patient.service.js';
 
 @Injectable()
 export class BookingService {
   private readonly registry: Booking[] = [];
   private sequenceId = 1;
 
-  constructor(private readonly doctorsService: DoctorsService) {}
+  constructor(private readonly doctorsService: DoctorsService,
+    private readonly patientService: PatientService,
+
+  ) {}
 
   async createBooking(patientId: number, payload: CreateBookingDto) {
+    const isPatientValid = this.patientService.exists(patientId);
+  if (!isPatientValid) {
+    throw new NotFoundException(`The patient with ID ${patientId} was not found.`);
+  }
+
     const isDoctorAvailable = this.doctorsService.exists(payload.doctorId);
     if (!isDoctorAvailable) {
       throw new NotFoundException(`The requested doctor with ID ${payload.doctorId} was not found.`);
