@@ -1,0 +1,122 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "Booking API Test Cases",
+  "dateExported": "2026-09-08T17:54:23.000Z",
+  "version": "1.1",
+  "requests": [
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "1. Successful Booking (Valid Request)",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-14T10:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "2. Failure - Booking in the Past",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2025-01-01T10:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "3. Failure - Booking Beyond 1-Month Window",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-11-14T10:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "4. Failure - Weekend Booking (Saturday)",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-12T10:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "5. Failure - Outside Working Hours (Too early)",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-14T07:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "6. Failure - Doctor Not Found",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 999,\n  \"appointmentTime\": \"2026-09-14T11:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "7. Failure - Time Gap Violation (<30 mins same doctor)",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-14T10:15:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "8. Success - Another Booking after 30+ Minutes Gap",
+      "headers": [
+        { "name": "user-role", "value": "PATIENT" },
+        { "name": "user-id", "value": "1" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-14T11:00:00.000Z\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "9. Failure - Missing Auth Headers (Unauthorized)",
+      "headers": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-16T10:00:00.000Z\"\n}"
+      }
+    }
+  ]
+}
