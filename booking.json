@@ -117,7 +117,7 @@
         "type": "json",
         "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-16T10:00:00.000Z\"\n}"
       }
-    }
+    },
   
   {
   "method": "POST",
