@@ -9,16 +9,16 @@ export class BookingService {
   private readonly registry: Booking[] = [];
   private sequenceId = 1;
 
-  constructor(private readonly doctorsService: DoctorsService,
+  constructor(
+    private readonly doctorsService: DoctorsService,
     private readonly patientService: PatientService,
-
   ) {}
 
-  async createBooking(patientId: number, payload: CreateBookingDto) {
+  async createBooking(patientId: number, payload: CreateBookingDto): Promise<Booking> {
     const isPatientValid = this.patientService.exists(patientId);
-  if (!isPatientValid) {
-    throw new NotFoundException(`The patient with ID ${patientId} was not found.`);
-  }
+    if (!isPatientValid) {
+      throw new NotFoundException(`The patient with ID ${patientId} was not found.`);
+    }
 
     const isDoctorAvailable = this.doctorsService.exists(payload.doctorId);
     if (!isDoctorAvailable) {
@@ -26,9 +26,12 @@ export class BookingService {
     }
 
     const scheduledDate = new Date(payload.appointmentTime);
-    this.verifyTimeConstraints(scheduledDate);
+    if (isNaN(scheduledDate.getTime())) {
+      throw new BadRequestException('Invalid appointment date/time format.');
+    }
 
-    this.enforceSpamCooldown(patientId, payload.doctorId, scheduledDate);
+    this.verifyTimeConstraints(scheduledDate);
+    this.enforceNoConflicts(patientId, payload.doctorId, scheduledDate);
 
     const createdBooking: Booking = {
       id: this.sequenceId++,
@@ -42,15 +45,16 @@ export class BookingService {
     return createdBooking;
   }
 
-  private verifyTimeConstraints(targetDate: Date) {
+  private verifyTimeConstraints(targetDate: Date): void {
     const currentMoment = new Date();
     const maxAllowedLimit = new Date();
     maxAllowedLimit.setMonth(maxAllowedLimit.getMonth() + 1);
 
-    if (targetDate < currentMoment) {
+    if (targetDate.getTime() < currentMoment.getTime()) {
       throw new BadRequestException('Appointments cannot be scheduled in the past.');
     }
-    if (targetDate > maxAllowedLimit) {
+
+    if (targetDate.getTime() > maxAllowedLimit.getTime()) {
       throw new BadRequestException('Bookings are restricted to a maximum 1-month window.');
     }
 
@@ -60,31 +64,56 @@ export class BookingService {
     if (dayCode === 5 || dayCode === 6) {
       throw new BadRequestException('The clinic remains closed during weekends (Friday & Saturday).');
     }
+
     if (activeHour < 9 || activeHour >= 17) {
       throw new BadRequestException('Reservations are only permitted during official hours (09:00 AM - 05:00 PM UTC).');
     }
   }
 
-  private enforceSpamCooldown(patientId: number, doctorId: number, targetDate: Date) {
+  private enforceNoConflicts(patientId: number, doctorId: number, targetDate: Date): void {
     const targetTime = targetDate.getTime();
     const thirtyMinutesMs = 30 * 60 * 1000;
 
-    const conflictingBooking = this.registry.some((entry) => {
+    // 1. Doctor Schedule Overlap: Doctor cannot have any overlapping booking (< 30 min window)
+    const doctorBooked = this.registry.some((entry) => {
+      if (entry.doctorId !== doctorId) {
+        return false;
+      }
+      const existingTime = new Date(entry.appointmentTime).getTime();
+      return Math.abs(targetTime - existingTime) < thirtyMinutesMs;
+    });
+
+    if (doctorBooked) {
+      throw new ConflictException('The requested doctor is already booked for this time slot (30-minute interval required).');
+    }
+
+    // 2. Patient Spam Cooldown: Patient cannot double-book the same doctor in a short window
+    const patientCooldownViolation = this.registry.some((entry) => {
       if (entry.patientId !== patientId || entry.doctorId !== doctorId) {
         return false;
       }
       const existingTime = new Date(entry.appointmentTime).getTime();
-      const timeDifference = Math.abs(targetTime - existingTime);
-      
-      return timeDifference < thirtyMinutesMs;
+      return Math.abs(targetTime - existingTime) < thirtyMinutesMs;
     });
 
-    if (conflictingBooking) {
+    if (patientCooldownViolation) {
       throw new ConflictException('You must have at least a 30-minute gap between your appointments with the same doctor.');
     }
   }
 
-  findAll() {
+  findAll(): Booking[] {
     return this.registry;
+  }
+
+  findById(id: number): Booking {
+    const booking = this.registry.find((b) => b.id === Number(id));
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID ${id} was not found.`);
+    }
+    return booking;
+  }
+
+  findByPatientId(patientId: number): Booking[] {
+    return this.registry.filter((b) => b.patientId === Number(patientId));
   }
 }

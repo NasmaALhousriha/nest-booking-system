@@ -1,16 +1,71 @@
 {
   "client": "Thunder Client",
-  "collectionName": "Booking API Test Cases",
-  "dateExported": "2026-09-08T17:54:23.000Z",
+  "collectionName": "Booking System Professional API Test Suite",
+  "dateExported": "2026-09-09T12:00:00.000Z",
   "version": "1.1",
   "requests": [
     {
       "method": "POST",
-      "url": "http://localhost:3000/bookings",
-      "name": "1. Successful Booking (Valid Request)",
+      "url": "http://localhost:3000/auth/login",
+      "name": "01. Auth - Login as Patient (Generates JWT)",
+      "headers": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"Patient123!\"\n}"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/auth/login",
+      "name": "02. Auth - Login as Admin (Generates Admin JWT)",
+      "headers": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+      }
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3000/users",
+      "name": "03. Users - Get All Users (Admin Role - Passwords Excluded)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3ODkwMDY0OTYsImV4cCI6MTc4OTYxMTI5Nn0.gWbJ6h_4rGIhfqiVcGP4vehwUKVgxXPiSdjs6gWgsNo"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3000/users",
+      "name": "04. Users - Forbidden Access Attempt by Patient (Expected 403)",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg4OTQ5MDcyLCJleHAiOjE4MjA0ODUwNzJ9.xVWOWEU4Z38tlRmNLtvJowhzV-zGdsnX8ixlpWUJVjo"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3000/doctors",
+      "name": "05. Doctors - List All Doctors (Authenticated Patient)",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg4OTQ5MDcyLCJleHAiOjE4MjA0ODUwNzJ9.xVWOWEU4Z38tlRmNLtvJowhzV-zGdsnX8ixlpWUJVjo"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3000/bookings",
+      "name": "06. Bookings - 1. Successful Booking (Valid Request)",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -20,10 +75,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "2. Failure - Booking in the Past",
+      "name": "07. Bookings - 2. Failure - Booking in the Past (Expected 400)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -33,10 +90,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "3. Failure - Booking Beyond 1-Month Window",
+      "name": "08. Bookings - 3. Failure - Booking Beyond 1-Month Window (Expected 400)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -46,10 +105,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "4. Failure - Weekend Booking (Saturday)",
+      "name": "09. Bookings - 4. Failure - Weekend Booking Saturday (Expected 400)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -59,10 +120,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "5. Failure - Outside Working Hours (Too early)",
+      "name": "10. Bookings - 5. Failure - Outside Working Hours (Expected 400)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -72,10 +135,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "6. Failure - Doctor Not Found",
+      "name": "11. Bookings - 6. Failure - Doctor Not Found (Expected 404)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -85,10 +150,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "7. Failure - Time Gap Violation (<30 mins same doctor)",
+      "name": "12. Bookings - 7. Failure - Slot Overlap / Gap Violation (<30 mins) (Expected 409)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -98,10 +165,12 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "8. Success - Another Booking after 30+ Minutes Gap",
+      "name": "13. Bookings - 8. Success - Another Booking after 30+ Minutes Gap (Expected 201)",
       "headers": [
-        { "name": "user-role", "value": "PATIENT" },
-        { "name": "user-id", "value": "1" }
+        {
+          "name": "Authorization",
+          "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoicGF0aWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg5MDA2Nzk5LCJleHAiOjE3ODk2MTE1OTl9.hgt2L4WP9oKd494W_f6nZPG6TKAJDrVroHwPZ8OuCvE"
+        }
       ],
       "body": {
         "type": "json",
@@ -111,27 +180,13 @@
     {
       "method": "POST",
       "url": "http://localhost:3000/bookings",
-      "name": "9. Failure - Missing Auth Headers (Unauthorized)",
+      "name": "14. Bookings - 9. Failure - Missing Auth Token (Expected 401)",
       "headers": [],
       "body": {
         "type": "json",
         "raw": "{\n  \"doctorId\": 1,\n  \"appointmentTime\": \"2026-09-16T10:00:00.000Z\"\n}"
       }
-    },
-  
-  {
-  "method": "POST",
-  "url": "http://localhost:3000/bookings",
-  "name": "10. Failure - Patient Not Found (Unregistered Patient ID)",
-  "headers": [
-    { "name": "user-role", "value": "PATIENT" },
-    { "name": "user-id", "value": "10000" }
-  ],
-  "body": {
-    "type": "json",
-    "raw": "{\n  \"doctorId\": 2,\n  \"appointmentTime\": \"2026-09-14T11:00:00.000Z\"\n}"
-  }
-
-}
+    }
+    
   ]
 }
