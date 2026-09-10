@@ -11,7 +11,6 @@ export class UserService implements OnModuleInit {
 
   async onModuleInit() {
     if (this.users.length === 0) {
-      // Seed default accounts for immediate system operation and testing
       await this.createInternal('Admin User', 'admin@example.com', 'Admin123!', UserRole.ADMIN);
       await this.createInternal('Dr. Nasma', 'doctor@example.com', 'Doctor123!', UserRole.DOCTOR);
       await this.createInternal('Patient One', 'patient@example.com', 'Patient123!', UserRole.PATIENT);

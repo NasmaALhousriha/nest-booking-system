@@ -74,7 +74,6 @@ export class BookingService {
     const targetTime = targetDate.getTime();
     const thirtyMinutesMs = 30 * 60 * 1000;
 
-    // 1. Doctor Schedule Overlap: Doctor cannot have any overlapping booking (< 30 min window)
     const doctorBooked = this.registry.some((entry) => {
       if (entry.doctorId !== doctorId) {
         return false;
@@ -87,7 +86,6 @@ export class BookingService {
       throw new ConflictException('The requested doctor is already booked for this time slot (30-minute interval required).');
     }
 
-    // 2. Patient Spam Cooldown: Patient cannot double-book the same doctor in a short window
     const patientCooldownViolation = this.registry.some((entry) => {
       if (entry.patientId !== patientId || entry.doctorId !== doctorId) {
         return false;
