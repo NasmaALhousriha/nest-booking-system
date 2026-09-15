@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+provider = "sqlite"
+}
+
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String?
+  
+  role      UserRole @default(PATIENT) 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patientProfile Patient?
+
+  doctorBookings Booking[] @relation("DoctorBookings")
+
+  @@map("users")
+}
+
+model Patient {
+  id     Int    @id @default(autoincrement())
+  phone  String?
+  
+  // One-to-One
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  @@map("patients")
+}
+
+model Booking {
+  id              Int      @id @default(autoincrement())
+  appointmentTime DateTime
+  status          String   @default("PENDING")
+
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  doctorId Int
+  doctor   User  @relation("DoctorBookings", fields: [doctorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bookings")
+}

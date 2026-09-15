@@ -14,26 +14,26 @@ export class BookingController {
 
   @Post()
   @Roles(UserRole.PATIENT, UserRole.ADMIN)
-  public createNewBooking(
+  public async createNewBooking(
     @CurrentUser() activeUser: any,
     @Body() payload: CreateBookingDto,
   ) {
-    const targetPatientId = Number(activeUser?.id ?? activeUser?.sub);
-    return this.bookingService.createBooking(targetPatientId, payload);
+    const targetUserId = Number(activeUser?.id ?? activeUser?.sub);
+    return this.bookingService.createBooking(targetUserId, payload);
   }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
-  public getAllBookings(@CurrentUser() activeUser: any) {
+  public async getAllBookings(@CurrentUser() activeUser: any) {
     if (activeUser?.role === UserRole.ADMIN || activeUser?.role === UserRole.DOCTOR) {
       return this.bookingService.findAll();
     }
-    return this.bookingService.findByPatientId(Number(activeUser?.id));
+    return this.bookingService.findByUserId(Number(activeUser?.id ?? activeUser?.sub));
   }
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
-  public getBookingById(@Param('id', ParseIntPipe) id: number) {
+  public async getBookingById(@Param('id', ParseIntPipe) id: number) {
     return this.bookingService.findById(id);
   }
 }

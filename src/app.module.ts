@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module.js';
 import { BookingModule } from './booking/booking.module.js';
 import { DoctorModule } from './doctor/doctor.module.js';
 import { PatientModule } from './patient/patient.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 
 @Module({
@@ -17,7 +18,8 @@ import { PatientModule } from './patient/patient.module.js';
     UserModule,
     BookingModule,
     DoctorModule,
-    PatientModule
+    PatientModule,
+    PrismaModule
   ],
   controllers: [AppController],
   providers: [

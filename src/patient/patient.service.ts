@@ -1,35 +1,52 @@
-import { Injectable } from '@nestjs/common';
-import { Patient } from './entities/patient.entity.js';
-import { CreatePatientDto } from './dto/create-patient.dto.js';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { Patient, User } from '@prisma/client';
+
+export type PatientWithUser = Patient & { user: Omit<User, 'password'> };
 
 @Injectable()
 export class PatientService {
-  private readonly patients: Patient[] = [
-    { id: 1, name: 'Nasma', email: 'nasma@example.com' },
-    { id: 2, name: 'Ahmad', email: 'ahmad@example.com' },
-    { id: 3, name: 'Patient One', email: 'patient@example.com' },
-  ];
-  private sequenceId = 4;
+  constructor(private readonly prisma: PrismaService) {}
 
-  findAll(): Patient[] {
-    return this.patients;
+  async findAll(): Promise<PatientWithUser[]> {
+    return this.prisma.patient.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
   }
 
-  exists(id: number): boolean {
-    return this.patients.some((patient) => patient.id === Number(id));
+  async exists(id: number): Promise<boolean> {
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: Number(id) },
+    });
+    return !!patient;
   }
 
-  findById(id: number): Patient | undefined {
-    return this.patients.find((patient) => patient.id === Number(id));
-  }
-
-  create(dto: CreatePatientDto): Patient {
-    const patient: Patient = {
-      id: this.sequenceId++,
-      name: dto.name,
-      email: dto.email,
-    };
-    this.patients.push(patient);
-    return patient;
+  async findById(id: number): Promise<PatientWithUser | null> {
+    return this.prisma.patient.findUnique({
+      where: { id: Number(id) },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
   }
 }

@@ -1,9 +1,8 @@
-import { IsNotEmpty, IsNumber, IsDateString, IsInt } from 'class-validator';
+import { IsNotEmpty, IsInt, IsDateString } from 'class-validator';
 
 export class CreateBookingDto {
   @IsNotEmpty()
   @IsInt()
-  @IsNumber()
   doctorId: number;
 
   @IsNotEmpty()

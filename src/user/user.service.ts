@@ -1,39 +1,53 @@
 import { Injectable, ConflictException, OnModuleInit } from '@nestjs/common';
-import bcrypt from 'bcrypt';
-import { User } from './entities/user.entity.js';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user-dto.js';
-import { UserRole } from '../common/enums/user-role.enum.js';
+import { UserResponseDto } from './dto/user-response.dto.js'; 
+import { PrismaService } from '../prisma/prisma.service.js';
+import { UserRole, User } from '@prisma/client';
 
 @Injectable()
 export class UserService implements OnModuleInit {
-  private readonly users: User[] = [];
-  private sequenceId = 1;
+  constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    if (this.users.length === 0) {
+    const count = await this.prisma.user.count();
+    if (count === 0) {
       await this.createInternal('Admin User', 'admin@example.com', 'Admin123!', UserRole.ADMIN);
       await this.createInternal('Dr. Nasma', 'doctor@example.com', 'Doctor123!', UserRole.DOCTOR);
       await this.createInternal('Patient One', 'patient@example.com', 'Patient123!', UserRole.PATIENT);
     }
   }
 
-  private async createInternal(name: string, email: string, rawPass: string, role: UserRole): Promise<User> {
+  private async createInternal(
+    name: string,
+    email: string,
+    rawPass: string,
+    role: UserRole,
+  ): Promise<User> {
     const hashedPassword = await bcrypt.hash(rawPass, 10);
-    const user = new User({
-      id: this.sequenceId++,
-      name,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          role,
+        },
+      });
+      if (role === UserRole.PATIENT) {
+        await tx.patient.create({
+          data: { userId: user.id },
+        });
+      }
+      return user;
     });
-    this.users.push(user);
-    return user;
   }
 
-  async create(createUserDto: CreateUserDto, role: UserRole = UserRole.PATIENT): Promise<User> {
-    const existing = await this.findByEmail(createUserDto.email);
+  async create(createUserDto: CreateUserDto, role: UserRole = UserRole.PATIENT): Promise<UserResponseDto> {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: createUserDto.email.toLowerCase() },
+    });
+
     if (existing) {
       throw new ConflictException(`User with email '${createUserDto.email}' already exists.`);
     }
@@ -45,30 +59,31 @@ export class UserService implements OnModuleInit {
       role,
     );
 
-    return this.sanitizeUser(created);
+    return new UserResponseDto(created);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.users.map((user) => this.sanitizeUser(user));
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.prisma.user.findMany();
+    return users.map((user) => new UserResponseDto(user));
   }
 
-  async findById(id: number): Promise<User | null> {
-    const user = this.users.find((u) => u.id === id);
-    return user ? this.sanitizeUser(user) : null;
+  async findById(id: number): Promise<UserResponseDto | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: Number(id) },
+    });
+    return user ? new UserResponseDto(user) : null;
   }
 
   async findByEmailWithPassword(email: string): Promise<User | null> {
-    const user = this.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    return user ? { ...user } as User : null;
+    return this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const user = this.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    return user ? this.sanitizeUser(user) : null;
-  }
-
-  sanitizeUser(user: User): User {
-    const { password: _password, ...safeUser } = user;
-    return new User(safeUser);
+  async findByEmail(email: string): Promise<UserResponseDto | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    return user ? new UserResponseDto(user) : null;
   }
 }

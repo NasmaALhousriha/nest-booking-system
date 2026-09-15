@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, UseGuards, UseInterceptors, ClassSerialize
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { CreateUserDto } from '../user/dto/create-user-dto.js';
+import { UserResponseDto } from '../user/dto/user-response.dto.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -13,13 +14,13 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto): Promise<{ access_token: string; user: UserResponseDto }> {
     return this.authService.login(loginDto);
   }
 
   @Public()
   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
+  async register(@Body() createUserDto: CreateUserDto): Promise<{ access_token: string; user: UserResponseDto }> {
     return this.authService.register(createUserDto);
   }
 

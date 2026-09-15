@@ -1,19 +1,18 @@
 import { Exclude } from 'class-transformer';
-import { UserRole } from '../../common/enums/user-role.enum.js';
+import { UserRole } from '@prisma/client';
 
-export class User {
+export class UserResponseDto {
   id: number;
   name: string;
   email: string;
-
-  @Exclude()
-  password?: string;
-
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(partial: Partial<User>) {
+  @Exclude()
+  password?: string | null;
+
+  constructor(partial: Partial<UserResponseDto>) {
     Object.assign(this, partial);
   }
 }

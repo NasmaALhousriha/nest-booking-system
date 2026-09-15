@@ -1,40 +1,81 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateDoctorDto } from './dto/create-doctor.dto.js';
+import { UserRole } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
-export interface Doctor {
+export interface DoctorResponse {
   id: number;
   name: string;
+  email: string;
   specialty?: string;
 }
 
 @Injectable()
 export class DoctorsService {
-  private readonly doctors: Doctor[] = [
-    { id: 1, name: 'Dr. Nasma', specialty: 'Cardiology' },
-    { id: 2, name: 'Dr. Lyana', specialty: 'Pediatrics' },
-    { id: 3, name: 'Dr. Ali', specialty: 'Dermatology' },
-  ];
-  private sequenceId = 4;
+  constructor(private readonly prisma: PrismaService) {}
 
-  exists(doctorId: number): boolean {
-    return this.doctors.some((doctor) => doctor.id === Number(doctorId));
+  async exists(doctorId: number): Promise<boolean> {
+    const doctor = await this.prisma.user.findFirst({
+      where: {
+        id: Number(doctorId),
+        role: UserRole.DOCTOR,
+      },
+    });
+    return !!doctor;
   }
 
-  findAll(): Doctor[] {
-    return this.doctors;
+  async findAll(): Promise<DoctorResponse[]> {
+    const doctors = await this.prisma.user.findMany({
+      where: { role: UserRole.DOCTOR },
+    });
+
+    return doctors.map((doc) => ({
+      id: doc.id,
+      name: doc.name,
+      email: doc.email,
+      specialty: 'General',
+    }));
   }
 
-  findById(doctorId: number): Doctor | undefined {
-    return this.doctors.find((d) => d.id === Number(doctorId));
+  async findById(doctorId: number): Promise<DoctorResponse> {
+    const doctor = await this.prisma.user.findFirst({
+      where: {
+        id: Number(doctorId),
+        role: UserRole.DOCTOR,
+      },
+    });
+
+    if (!doctor) {
+      throw new NotFoundException(`Doctor with ID ${doctorId} not found.`);
+    }
+
+    return {
+      id: doctor.id,
+      name: doctor.name,
+      email: doctor.email,
+      specialty: 'General',
+    };
   }
 
-  create(dto: CreateDoctorDto): Doctor {
-    const doctor: Doctor = {
-      id: this.sequenceId++,
-      name: dto.name,
+  async create(dto: CreateDoctorDto): Promise<DoctorResponse> {
+    const hashedPassword = await bcrypt.hash('DoctorDefault123!', 10);
+    const email = `${dto.name.toLowerCase().replace(/\s+/g, '')}@clinic.com`;
+
+    const newDoctor = await this.prisma.user.create({
+      data: {
+        name: dto.name,
+        email: email,
+        password: hashedPassword,
+        role: UserRole.DOCTOR,
+      },
+    });
+
+    return {
+      id: newDoctor.id,
+      name: newDoctor.name,
+      email: newDoctor.email,
       specialty: dto.specialty || 'General',
     };
-    this.doctors.push(doctor);
-    return doctor;
   }
 }
