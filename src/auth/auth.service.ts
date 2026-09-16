@@ -5,7 +5,7 @@ import { UserService } from '../user/user.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { CreateUserDto } from '../user/dto/create-user-dto.js';
 import { UserResponseDto } from '../user/dto/user-response.dto.js'; 
-import { UserRole } from '@prisma/client'; 
+import { UserRole } from '../generated/index.js'; 
 
 @Injectable()
 export class AuthService {

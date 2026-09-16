@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaClient } from '../generated/index.js';
 import { CreateDoctorDto } from './dto/create-doctor.dto.js';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../generated/index.js';
 import * as bcrypt from 'bcrypt';
 
 export interface DoctorResponse {

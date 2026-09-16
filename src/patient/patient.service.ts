@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaClient } from '../generated/index.js';
-import { Patient, User } from '@prisma/client';
+import { Patient, User } from '../generated/index.js';
 
 export type PatientWithUser = Patient & { user: Omit<User, 'password'> };
 

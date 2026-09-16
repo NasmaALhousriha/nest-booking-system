@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user-dto.js';
 import { UserResponseDto } from './dto/user-response.dto.js'; 
 import { PrismaClient } from '../generated/index.js';
-import { UserRole, User } from '@prisma/client';
+import { UserRole, User } from '../generated/index.js';
 
 @Injectable()
 export class UserService implements OnModuleInit {
