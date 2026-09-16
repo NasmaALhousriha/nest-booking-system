@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaClient } from '../generated/index.js';
+import { PrismaService } from '../prisma/prisma.service.js'; 
 import { CreateDoctorDto } from './dto/create-doctor.dto.js';
-import { UserRole } from '../generated/index.js';
+import { UserRole } from '../../generated/index.js';
 import * as bcrypt from 'bcrypt';
 
 export interface DoctorResponse {
@@ -13,7 +13,7 @@ export interface DoctorResponse {
 
 @Injectable()
 export class DoctorsService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async exists(doctorId: number): Promise<boolean> {
     const doctor = await this.prisma.doctor.findUnique({

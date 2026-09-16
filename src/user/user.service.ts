@@ -1,13 +1,13 @@
 import { Injectable, ConflictException, OnModuleInit } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user-dto.js';
-import { UserResponseDto } from './dto/user-response.dto.js'; 
-import { PrismaClient } from '../generated/index.js';
-import { UserRole, User } from '../generated/index.js';
+import { UserResponseDto } from './dto/user-response.dto.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { UserRole, User } from '../../generated/index.js';
 
 @Injectable()
 export class UserService implements OnModuleInit {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
     const count = await this.prisma.user.count();
@@ -34,11 +34,19 @@ export class UserService implements OnModuleInit {
           role,
         },
       });
+
       if (role === UserRole.PATIENT) {
         await tx.patient.create({
           data: { userId: user.id },
         });
       }
+
+      if (role === UserRole.DOCTOR) {
+        await tx.doctor.create({
+          data: { userId: user.id, specialty: 'General' },
+        });
+      }
+
       return user;
     });
   }

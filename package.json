@@ -6,7 +6,7 @@
 "license":"UNLICENSED",
 "type":"module",
 "scripts":{
-"build": "nest build && npx cpy src/generated dist/generated",
+"build": "nest build",
 "deploy":"nest deploy",
 "format":"prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
 "start":"nest start",

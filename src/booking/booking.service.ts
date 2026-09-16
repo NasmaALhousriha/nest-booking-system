@@ -1,50 +1,72 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
-import { PrismaClient,Booking } from '../generated/index.js';
-
-
+import {  Booking } from '../../generated/index.js';
+import { PrismaService } from '../prisma/prisma.service.js'; 
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
+async createBooking(userId: number, payload: CreateBookingDto): Promise<Booking> {
+  const patient = await this.prisma.patient.findUnique({
+    where: { userId: Number(userId) },
+  });
+  if (!patient) throw new NotFoundException(`Patient profile not found for this user.`);
 
-  async createBooking(userId: number, payload: CreateBookingDto): Promise<Booking> {
-    const patient = await this.prisma.patient.findUnique({
-      where: { userId: Number(userId) },
-    });
+  const doctorUser = await this.prisma.user.findUnique({
+    where: { id: Number(payload.doctorId), role: 'DOCTOR' },
+  });
+  if (!doctorUser) throw new NotFoundException(`The requested doctor with ID ${payload.doctorId} was not found.`);
 
-    if (!patient) {
-      throw new NotFoundException(`Patient profile not found for this user.`);
-    }
+  const doctorProfile = await this.prisma.doctor.findUnique({
+    where: { userId: doctorUser.id },
+  });
+  if (!doctorProfile) throw new NotFoundException(`Doctor profile not found for user ID ${doctorUser.id}.`);
 
-    const doctor = await this.prisma.user.findUnique({
-      where: { id: Number(payload.doctorId), role: 'DOCTOR' },
-    });
+  const scheduledDate = new Date(payload.appointmentTime);
+  if (isNaN(scheduledDate.getTime())) throw new BadRequestException('Invalid appointment date/time format.');
 
-    if (!doctor) {
-      throw new NotFoundException(`The requested doctor with ID ${payload.doctorId} was not found.`);
-    }
+  this.verifyTimeConstraints(scheduledDate);
 
-    const scheduledDate = new Date(payload.appointmentTime);
-    if (isNaN(scheduledDate.getTime())) {
-      throw new BadRequestException('Invalid appointment date/time format.');
-    }
+  return this.prisma.$transaction(
+    async (tx) => {
+      await this.enforceNoConflicts(tx, patient.id, doctorProfile.id, scheduledDate);
 
-    this.verifyTimeConstraints(scheduledDate);
-    
-    await this.enforceNoConflicts(patient.id, payload.doctorId, scheduledDate);
+      return tx.booking.create({
+        data: {
+          patientId: patient.id,
+          doctorId: doctorProfile.id,
+          appointmentTime: scheduledDate,
+          status: 'CONFIRMED',
+        },
+      });
+    },
+    { isolationLevel: 'Serializable' },
+  );
+}
 
-    return this.prisma.booking.create({
-      data: {
-        patientId: patient.id,
-        doctorId: payload.doctorId,
-        appointmentTime: scheduledDate,
-        status: 'CONFIRMED',
-      },
-    });
-  }
+private async enforceNoConflicts(tx: any, patientId: number, doctorId: number, targetDate: Date): Promise<void> {
+  const thirtyMinutesBefore = new Date(targetDate.getTime() - 30 * 60 * 1000);
+  const thirtyMinutesAfter = new Date(targetDate.getTime() + 30 * 60 * 1000);
 
-  private verifyTimeConstraints(targetDate: Date): void {
+  const doctorConflict = await tx.booking.findFirst({
+    where: {
+      doctorId: Number(doctorId),
+      appointmentTime: { gte: thirtyMinutesBefore, lte: thirtyMinutesAfter },
+      status: { not: 'CANCELLED' },
+    },
+  });
+  if (doctorConflict) throw new ConflictException('The requested doctor is already booked for this time slot (30-minute interval required).');
+
+  const patientConflict = await tx.booking.findFirst({
+    where: {
+      patientId: Number(patientId),
+      appointmentTime: { gte: thirtyMinutesBefore, lte: thirtyMinutesAfter },
+      status: { not: 'CANCELLED' },
+    },
+  });
+  if (patientConflict) throw new ConflictException('You already have another appointment within 30 minutes of this time slot.');
+}
+private verifyTimeConstraints(targetDate: Date): void {
     const currentMoment = new Date();
     const maxAllowedLimit = new Date();
     maxAllowedLimit.setMonth(maxAllowedLimit.getMonth() + 1);
@@ -69,64 +91,29 @@ export class BookingService {
     }
   }
 
-  private async enforceNoConflicts(patientId: number, doctorId: number, targetDate: Date): Promise<void> {
-    const thirtyMinutesBefore = new Date(targetDate.getTime() - 30 * 60 * 1000);
-    const thirtyMinutesAfter = new Date(targetDate.getTime() + 30 * 60 * 1000);
-
-    const doctorConflict = await this.prisma.booking.findFirst({
-      where: {
-        doctorId: Number(doctorId),
-        appointmentTime: {
-          gte: thirtyMinutesBefore,
-          lte: thirtyMinutesAfter,
-        },
-        status: { not: 'CANCELLED' },
-      },
-    });
-
-    if (doctorConflict) {
-      throw new ConflictException('The requested doctor is already booked for this time slot (30-minute interval required).');
-    }
-
-    const patientConflict = await this.prisma.booking.findFirst({
-      where: {
-        patientId: Number(patientId),
-        appointmentTime: {
-          gte: thirtyMinutesBefore,
-          lte: thirtyMinutesAfter,
-        },
-        status: { not: 'CANCELLED' },
-      },
-    });
-
-    if (patientConflict) {
-      throw new ConflictException('You must have at least a 30-minute gap between your appointments with the same doctor.');
-    }
-  }
-
   async findAll() {
     return this.prisma.booking.findMany({
       include: {
         patient: {
-        include: {
-          user: {
-            omit: {
-              password: true, 
+          include: {
+            user: {
+              omit: {
+                password: true,
+              },
+            },
+          },
+        },
+        doctor: {
+          include: {
+            user: {
+              omit: {
+                password: true,
+              },
             },
           },
         },
       },
-        doctor: {
-      include: {
-        user: {
-          omit: {
-            password: true
-          }
-        }
-      }
-    }
-      }
-  });
+    });
   }
 
   async findById(bookingId: number, userId: number, userRole: string) {
@@ -155,14 +142,14 @@ export class BookingService {
           },
         },
         doctor: {
-           include: {
+          include: {
             user: {
-            omit: {
-              password: true
-                }
-    }
-  }
-},
+              omit: {
+                password: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -182,18 +169,18 @@ export class BookingService {
     }
 
     return this.prisma.booking.findMany({
-  where: { patientId: patient.id },
-  include: {
-    doctor: {
+      where: { patientId: patient.id },
       include: {
-        user: {
-          omit: {
-            password: true
-          }
-        }
-      }
-    }
+        doctor: {
+          include: {
+            user: {
+              omit: {
+                password: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
-});
-}
 }

@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '../generated/index.js';
-import { Patient, User } from '../generated/index.js';
+import { PrismaService } from '../prisma/prisma.service.js'; 
+import { Patient, User } from '../../generated/index.js';
 
 export type PatientWithUser = Patient & { user: Omit<User, 'password'> };
 
 @Injectable()
 export class PatientService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<PatientWithUser[]> {
     return this.prisma.patient.findMany({

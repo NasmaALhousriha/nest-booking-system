@@ -1,4 +1,4 @@
-import { PrismaClient } from '../src/generated/index.js';
+import { PrismaClient } from '../generated/index.js';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import * as bcrypt from 'bcrypt';
 
@@ -9,7 +9,7 @@ const adapter = new PrismaLibSql({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log(' Starting database seeding...');
+  console.log('Starting database seeding...');
 
   const existingAdmin = await prisma.user.findUnique({
     where: { email: 'admin@clinic.com' },
@@ -25,7 +25,7 @@ async function main() {
         role: 'ADMIN',
       },
     });
-    console.log(' Admin user created.');
+    console.log('Admin user created.');
   }
 
   const existingDoctor = await prisma.user.findUnique({
@@ -34,15 +34,24 @@ async function main() {
 
   if (!existingDoctor) {
     const hashedDoctorPassword = await bcrypt.hash('DoctorPassword123!', 10);
-    await prisma.user.create({
-      data: {
-        name: 'Dr. Ahmad',
-        email: 'dr.ahmad@clinic.com',
-        password: hashedDoctorPassword,
-        role: 'DOCTOR',
-      },
+    await prisma.$transaction(async (tx) => {
+      const doctorUser = await tx.user.create({
+        data: {
+          name: 'Dr. Ahmad',
+          email: 'dr.ahmad@clinic.com',
+          password: hashedDoctorPassword,
+          role: 'DOCTOR',
+        },
+      });
+
+      await tx.doctor.create({
+        data: {
+          userId: doctorUser.id,
+          specialty: 'General',
+        },
+      });
     });
-    console.log(' Default Doctor created.');
+    console.log('Default Doctor created (with doctor profile).');
   }
 
   console.log('Seeding finished successfully.');
@@ -50,7 +59,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(' Error during seeding:', e);
+    console.error('Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

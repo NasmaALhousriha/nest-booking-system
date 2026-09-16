@@ -3,7 +3,7 @@ import { PatientService } from './patient.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
-import { UserRole } from '../generated/index.js';
+import { UserRole } from '../../generated/index.js';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
