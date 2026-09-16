@@ -10,6 +10,8 @@ import { BookingModule } from './booking/booking.module.js';
 import { DoctorModule } from './doctor/doctor.module.js';
 import { PatientModule } from './patient/patient.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+// import { PrismaClient } from './generated/index.js';
+
 
 
 @Module({
@@ -19,7 +21,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     BookingModule,
     DoctorModule,
     PatientModule,
-    PrismaModule
+    PrismaModule 
   ],
   controllers: [AppController],
   providers: [

@@ -1,11 +1,12 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { Booking } from '@prisma/client';
+import { PrismaClient,Booking } from '../generated/index.js';
+
+
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaClient) {}
 
   async createBooking(userId: number, payload: CreateBookingDto): Promise<Booking> {
     const patient = await this.prisma.patient.findUnique({
@@ -90,7 +91,6 @@ export class BookingService {
     const patientConflict = await this.prisma.booking.findFirst({
       where: {
         patientId: Number(patientId),
-        doctorId: Number(doctorId),
         appointmentTime: {
           gte: thirtyMinutesBefore,
           lte: thirtyMinutesAfter,
@@ -104,26 +104,70 @@ export class BookingService {
     }
   }
 
-  async findAll(): Promise<Booking[]> {
+  async findAll() {
     return this.prisma.booking.findMany({
       include: {
-        patient: { include: { user: true } },
-        doctor: true,
+        patient: {
+        include: {
+          user: {
+            omit: {
+              password: true, 
+            },
+          },
+        },
       },
-    });
+        doctor: {
+      include: {
+        user: {
+          omit: {
+            password: true
+          }
+        }
+      }
+    }
+      }
+  });
   }
 
-  async findById(id: number): Promise<Booking> {
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: Number(id) },
+  async findById(bookingId: number, userId: number, userRole: string) {
+    let patientId: number | undefined = undefined;
+    if (userRole === 'PATIENT') {
+      const patient = await this.prisma.patient.findUnique({
+        where: { userId: Number(userId) },
+      });
+
+      if (!patient) {
+        throw new NotFoundException(`Patient profile not found.`);
+      }
+      patientId = patient.id;
+    }
+    const whereCondition: any = { id: Number(bookingId) };
+    if (userRole === 'PATIENT') {
+      whereCondition.patientId = patientId;
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where: whereCondition,
       include: {
-        patient: { include: { user: true } },
-        doctor: true,
+        patient: {
+          include: {
+            user: { omit: { password: true } },
+          },
+        },
+        doctor: {
+           include: {
+            user: {
+            omit: {
+              password: true
+                }
+    }
+  }
+},
       },
     });
 
     if (!booking) {
-      throw new NotFoundException(`Booking with ID ${id} was not found.`);
+      throw new NotFoundException(`Booking with ID ${bookingId} was not found or you do not have permission to view it.`);
     }
     return booking;
   }
@@ -138,10 +182,18 @@ export class BookingService {
     }
 
     return this.prisma.booking.findMany({
-      where: { patientId: patient.id },
+  where: { patientId: patient.id },
+  include: {
+    doctor: {
       include: {
-        doctor: true,
-      },
-    });
+        user: {
+          omit: {
+            password: true
+          }
+        }
+      }
+    }
   }
+});
+}
 }

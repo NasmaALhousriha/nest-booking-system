@@ -33,7 +33,12 @@ export class BookingController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
-  public async getBookingById(@Param('id', ParseIntPipe) id: number) {
-    return this.bookingService.findById(id);
+  public async getBookingById(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() activeUser: any,
+  ) {
+    const userId = Number(activeUser?.id ?? activeUser?.sub);
+    const userRole = activeUser?.role;
+    return this.bookingService.findById(id, userId, userRole);
   }
 }

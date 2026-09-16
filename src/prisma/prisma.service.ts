@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../generated/index.js';;
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 @Injectable()

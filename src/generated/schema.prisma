@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  
 }
 
 enum UserRole {
@@ -15,27 +14,27 @@ enum UserRole {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String?
-  role      UserRole @default(PATIENT) 
+  id       Int      @id @default(autoincrement())
+  name     String
+  email    String   @unique
+  password String?
+  role     UserRole @default(PATIENT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   patientProfile Patient?
-  doctorProfile  Doctor?  @relation("UserDoctorProfile") 
+  doctorProfile  Doctor?  @relation("UserDoctorProfile")
 
   @@map("users")
 }
 
 model Patient {
-  id     Int     @id @default(autoincrement())
-  phone  String?
-  
-  userId Int   @unique
-  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id    Int     @id @default(autoincrement())
+  phone String?
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   bookings Booking[]
 
@@ -44,12 +43,12 @@ model Patient {
 
 model Doctor {
   id        Int    @id @default(autoincrement())
-  specialty String @default("General") 
-  
-  userId    Int    @unique
-  user      User   @relation("UserDoctorProfile", fields: [userId], references: [id], onDelete: Cascade)
+  specialty String @default("General")
 
-  bookings  Booking[]
+  userId Int  @unique
+  user   User @relation("UserDoctorProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
 
   @@map("doctors")
 }
@@ -62,8 +61,8 @@ model Booking {
   patientId Int
   patient   Patient @relation(fields: [patientId], references: [id])
 
-  doctorId  Int 
-  doctor    Doctor  @relation(fields: [doctorId], references: [id])
+  doctorId Int
+  doctor   Doctor @relation(fields: [doctorId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

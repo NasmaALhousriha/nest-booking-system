@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/index.js';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import * as bcrypt from 'bcrypt';
 
