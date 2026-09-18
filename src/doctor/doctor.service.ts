@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateDoctorDto } from './dto/create-doctor.dto.js';
 import { UserRole } from '../../generated/index.js';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 export interface DoctorResponse {
   id: number;
@@ -53,48 +54,48 @@ export class DoctorsService {
     };
   }
 
-  async create(dto: CreateDoctorDto): Promise<DoctorResponse> {
-    const hashedPassword = await bcrypt.hash('DoctorDefault123!', 10);
-    
-    const baseEmail = dto.name.toLowerCase().replace(/\s+/g, '');
-    let email = `${baseEmail}@clinic.com`;
+  async create(dto: CreateDoctorDto): Promise<DoctorResponse & { temporaryPassword?: string }> {
+  const wasGenerated = !dto.password?.trim();
+  const plainPassword = dto.password?.trim() || crypto.randomBytes(9).toString('base64url');
+  const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
-    });
+  const baseEmail = dto.name.toLowerCase().replace(/\s+/g, '');
+  let email = `${baseEmail}@clinic.com`;
 
-    if (existingUser) {
-      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-      email = `${baseEmail}${randomSuffix}@clinic.com`;
-    }
+  const existingUser = await this.prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    email = `${baseEmail}${randomSuffix}@clinic.com`;
+  }
 
-    try {
-      const newDoctor = await this.prisma.doctor.create({
-        data: {
-          specialty: dto.specialty || 'General',
-          user: {
-            create: {
-              name: dto.name,
-              email: email,
-              password: hashedPassword,
-              role: UserRole.DOCTOR,
-            },
+  try {
+    const newDoctor = await this.prisma.doctor.create({
+      data: {
+        specialty: dto.specialty || 'General',
+        user: {
+          create: {
+            name: dto.name,
+            email,
+            password: hashedPassword,
+            role: UserRole.DOCTOR,
           },
         },
-        include: { user: true },
-      });
+      },
+      include: { user: true },
+    });
 
-      return {
-        id: newDoctor.id,
-        name: newDoctor.user.name,
-        email: newDoctor.user.email,
-        specialty: newDoctor.specialty,
-      };
-    } catch (error:any) {
-      if (error.code === 'P2002') {
-        throw new ConflictException('A user with this email already exists.');
-      }
-      throw error;
+    return {
+      id: newDoctor.id,
+      name: newDoctor.user.name,
+      email: newDoctor.user.email,
+      specialty: newDoctor.specialty,
+      ...(wasGenerated ? { temporaryPassword: plainPassword } : {}),
+    };
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      throw new ConflictException('A user with this email already exists.');
     }
+    throw error;
   }
+}
 }

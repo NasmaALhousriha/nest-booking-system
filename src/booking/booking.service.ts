@@ -7,43 +7,41 @@ import { PrismaService } from '../prisma/prisma.service.js';
 export class BookingService {
   constructor(private readonly prisma: PrismaService) {}
 async createBooking(userId: number, payload: CreateBookingDto): Promise<Booking> {
-  const patient = await this.prisma.patient.findUnique({
-    where: { userId: Number(userId) },
-  });
-  if (!patient) throw new NotFoundException(`Patient profile not found for this user.`);
+    const patient = await this.prisma.patient.findUnique({
+      where: { userId: Number(userId) },
+    });
+    if (!patient) throw new NotFoundException(`Patient profile not found for this user.`);
 
-  const doctorUser = await this.prisma.user.findUnique({
-    where: { id: Number(payload.doctorId), role: 'DOCTOR' },
-  });
-  if (!doctorUser) throw new NotFoundException(`The requested doctor with ID ${payload.doctorId} was not found.`);
+    const doctorProfile = await this.prisma.doctor.findUnique({
+      where: { id: Number(payload.doctorId) }, 
+      include: { user: true }, 
+    });
 
-  const doctorProfile = await this.prisma.doctor.findUnique({
-    where: { userId: doctorUser.id },
-  });
-  if (!doctorProfile) throw new NotFoundException(`Doctor profile not found for user ID ${doctorUser.id}.`);
+    if (!doctorProfile) {
+      throw new NotFoundException(`The requested doctor with ID ${payload.doctorId} was not found.`);
+    }
+    const scheduledDate = new Date(payload.appointmentTime);
+    if (isNaN(scheduledDate.getTime())) {
+      throw new BadRequestException('Invalid appointment date/time format.');
+    }
+    this.verifyTimeConstraints(scheduledDate);
 
-  const scheduledDate = new Date(payload.appointmentTime);
-  if (isNaN(scheduledDate.getTime())) throw new BadRequestException('Invalid appointment date/time format.');
+    return this.prisma.$transaction(
+      async (tx) => {
+        await this.enforceNoConflicts(tx, patient.id, doctorProfile.id, scheduledDate);
 
-  this.verifyTimeConstraints(scheduledDate);
-
-  return this.prisma.$transaction(
-    async (tx) => {
-      await this.enforceNoConflicts(tx, patient.id, doctorProfile.id, scheduledDate);
-
-      return tx.booking.create({
-        data: {
-          patientId: patient.id,
-          doctorId: doctorProfile.id,
-          appointmentTime: scheduledDate,
-          status: 'CONFIRMED',
-        },
-      });
-    },
-    { isolationLevel: 'Serializable' },
-  );
-}
-
+        return tx.booking.create({
+          data: {
+            patientId: patient.id,
+            doctorId: doctorProfile.id,
+            appointmentTime: scheduledDate,
+            status: 'CONFIRMED',
+          },
+        });
+      },
+      { isolationLevel: 'Serializable' },
+    );
+  }
 private async enforceNoConflicts(tx: any, patientId: number, doctorId: number, targetDate: Date): Promise<void> {
   const thirtyMinutesBefore = new Date(targetDate.getTime() - 30 * 60 * 1000);
   const thirtyMinutesAfter = new Date(targetDate.getTime() + 30 * 60 * 1000);

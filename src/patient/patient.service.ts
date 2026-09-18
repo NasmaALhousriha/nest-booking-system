@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js'; 
 import { Patient, User } from '../../generated/index.js';
 
@@ -32,21 +32,50 @@ export class PatientService {
     return !!patient;
   }
 
-  async findById(id: number): Promise<PatientWithUser | null> {
-    return this.prisma.patient.findUnique({
-      where: { id: Number(id) },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true,
+  async findById(id: number, userId: number, userRole: string): Promise<PatientWithUser> {
+    let patient;
+    if (userRole === 'PATIENT') {
+      patient = await this.prisma.patient.findUnique({
+        where: { userId: Number(userId) }, 
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true,
+            },
           },
         },
-      },
-    });
+      });
+    } else {
+      patient = await this.prisma.patient.findUnique({
+        where: { id: Number(id) },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+    }
+
+    if (!patient) {
+      throw new NotFoundException(`Patient profile was not found.`);
+    }
+
+    if (userRole === 'PATIENT' && patient.userId !== Number(userId)) {
+      throw new ForbiddenException('You do not have permission to view another patient\'s profile.');
+    }
+
+    return patient;
   }
 }

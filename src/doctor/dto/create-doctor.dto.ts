@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateDoctorDto {
   @IsNotEmpty({ message: 'Doctor name is required' })
@@ -8,4 +8,9 @@ export class CreateDoctorDto {
   @IsOptional()
   @IsString({ message: 'Specialty must be a string' })
   specialty?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Password must be a string' })
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  password?: string;
 }

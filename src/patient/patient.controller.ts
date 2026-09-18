@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, NotFoundException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, NotFoundException, UseGuards, Req } from '@nestjs/common';
 import { PatientService } from './patient.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -18,11 +18,12 @@ export class PatientController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    const patient = await this.patientService.findById(id);
-    if (!patient) {
-      throw new NotFoundException(`Patient with ID ${id} was not found.`);
-    }
+  async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    const currentUserId = req.user.id;   
+    const currentUserRole = req.user.role;
+
+    const patient = await this.patientService.findById(id, currentUserId, currentUserRole);
+    
     return patient;
   }
 }
