@@ -1,51 +1,61 @@
--- INSERT /UPDATE /DELETE /MERGE
-INSERT INTO doctors (name, email) VALUES
+-- INSERT / UPDATE / DELETE / MERGE
+
+INSERT INTO users (name, email) VALUES
     ('Nada', 'nada@clinic.com'),
     ('Yaser', 'yaser@clinic.com');
 
--- RETURNING
-INSERT INTO doctors (name, email)
+INSERT INTO doctors (user_id, field) VALUES
+    (4, 'الجلدية والتجميلية'),
+    (5, 'الأمراض الجلدية');
+
+
+-- 2. RETURNING 
+INSERT INTO users (name, email)
 VALUES ('Lubna', 'lubna@clinic.com')
 RETURNING id, name;
 
--- INSERT ... SELECT
-CREATE TABLE bookings_archive (LIKE bookings);
-INSERT INTO bookings_archive
-SELECT * FROM bookings WHERE status = 'CONFIRMED';
 
--- UPSERT
--- ON CONFLICT (تجاهل اذا موجود)
-INSERT INTO doctors (name, email)
+-- 3. INSERT ... SELECT
+CREATE TABLE IF NOT EXISTS bookings_archive (LIKE bookings INCLUDING ALL);
+INSERT INTO bookings_archive
+SELECT * FROM bookings WHERE status = 'confirmed';
+
+
+-- 4. UPSERT 
+INSERT INTO users (name, email)
 VALUES ('Sara', 'sara@clinic.com')
 ON CONFLICT (email) DO NOTHING;
--- أو حدث الموجود
-INSERT INTO doctors (name, email, specialty)
-VALUES ('Sara Ali', 'sara@clinic.com', 'Surgery')
-ON CONFLICT (email) DO UPDATE
-SET name      = EXCLUDED.name,
-    specialty = EXCLUDED.specialty;
+
+UPDATE users 
+SET name = 'Sara Ali' 
+WHERE email = 'sara@clinic.com';
 
 
--- update
-UPDATE bookings SET status = 'CONFIRMED' WHERE id = 2;
+-- 5. UPDATE 
+UPDATE bookings SET status = 'confirmed' WHERE id = 2;
 
 UPDATE doctors
-SET specialty = 'Surgery'
-WHERE name = 'Sara';  
+SET field = 'الجراحة العامة'
+WHERE id = 1;  
 
--- UPDATE ... FROM
-UPDATE bookings AS b
-SET status = 'CANCELLED'
+
+-- 6. UPDATE ... FROM 
+PDATE bookings AS b
+SET status = 'cancelled'
 FROM doctors AS d
 WHERE b.doctor_id = d.id
-  AND d.is_active = false;
+  AND d.is_active = FALSE;
 
--- subquery
+
+-- 7. Subquery 
 UPDATE bookings
 SET fee = fee * 1.10
-WHERE doctor_id IN (SELECT id FROM doctors WHERE specialty = 'Cardiology');
+WHERE doctor_id IN (
+    SELECT d.id FROM doctors d WHERE d.field = 'الأمراض الجلدية'
+);
 
--- case
+
+-- 8. CASE Statement 
 UPDATE bookings
 SET fee = CASE
     WHEN fee >= 60 THEN fee * 0.90
@@ -53,47 +63,44 @@ SET fee = CASE
     ELSE fee
 END;
 
--- شوف شو تعدل RETURNING
-UPDATE bookings SET status = 'CONFIRMED'
-WHERE id = 3
-RETURNING id, patient_name, status;
 
-DELETE FROM doctors
-WHERE name = 'Khaled';
+-- 9. RETURNING مع الـ UPDATE 
+UPDATE bookings SET status = 'confirmed'
+WHERE id = 3
+RETURNING id, status, fee;
+
+
+-- 10. DELETE (الحذف)
 
 DELETE FROM bookings
-WHERE status = 'PENDING' AND appointment_time < '2026-10-02';
--- اذا ما حطيت where رح يصير الحذف او التعديل على كل صفوف الجدول
+WHERE status = 'pending' AND appointment_time < '2026-10-02';
 
--- DELETE ... USING
--- بدي احذف الحجوزات المرتبطة باطباء حالتن غير نشطة
+
+-- 11. DELETE ... USING 
 DELETE FROM bookings AS b
 USING doctors AS d
 WHERE b.doctor_id = d.id
-  AND d.is_active = false;
+  AND d.is_active = FALSE;
 
---   subquery
+
+-- 12. Subquery مع DELETE
 DELETE FROM bookings
-WHERE doctor_id IN (SELECT id FROM doctors WHERE specialty = 'Dermatology');
+WHERE doctor_id IN (SELECT id FROM doctors WHERE field = 'الجلدية والتجميلية');
 
--- MARGE
--- بعمل مطابقة ودمج
 
+-- 13. MERGE (الدمج والمطابقة)
 MERGE INTO doctors AS d
-USING doctors_import AS i ON d.email = i.email
+USING (VALUES (1, 'الجلدية والتجميلية', TRUE)) AS i(doc_id, new_field, active)
+ON d.id = i.doc_id
 WHEN MATCHED THEN
-    UPDATE SET specialty = i.specialty
-WHEN NOT MATCHED THEN
-    INSERT (name, email, specialty) VALUES (i.name, i.email, i.specialty);
+    UPDATE SET field = i.new_field, is_active = i.active;
 
--- Atomic Operation
--- منع فقدان البيانات
+
+-- 14. Atomic Operation
 WITH deleted AS (
     DELETE FROM bookings
-    WHERE status = 'PENDING'
+    WHERE status = 'pending'
     RETURNING *
 )
 INSERT INTO bookings_archive
-SELECT * FROM deleted; 
-
-
+SELECT * FROM deleted;

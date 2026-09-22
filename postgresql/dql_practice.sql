@@ -3,49 +3,79 @@
  -- كل الأعمدة
 SELECT * FROM doctors;  
  -- أعمدة محددة                       
-SELECT name, specialty FROM doctors;
+SELECT u.name AS doctor_name, d.field 
+FROM doctors d
+JOIN users u ON d.user_id = u.id;
 -- alias          
-SELECT name AS doctor_name FROM doctors; 
+-- alias          
+SELECT u.name AS doctor_name 
+FROM doctors d
+JOIN users u ON d.user_id = u.id;
 -- بدون تكرار 
-SELECT DISTINCT specialty FROM doctors;        
-
+SELECT DISTINCT field FROM doctors;
 
 -- WHERE
-SELECT * FROM bookings WHERE status = 'CONFIRMED' AND fee >= 50;
+SELECT * FROM bookings WHERE status = 'confirmed' AND fee >= 50;
+
 -- OR مع أقواس 
 SELECT * FROM bookings
-WHERE doctor_id = 1 AND (status = 'PENDING' OR status = 'CANCELLED');  
+WHERE doctor_id = 1 AND (status = 'pending' OR status = 'cancelled');
+
 -- IN و NOT IN
-SELECT * FROM bookings WHERE status IN ('PENDING', 'CANCELLED');       
-SELECT * FROM bookings WHERE status NOT IN ('PENDING', 'CANCELLED');
+SELECT * FROM bookings WHERE status IN ('pending', 'cancelled');       
+SELECT * FROM bookings WHERE status NOT IN ('pending', 'cancelled');
+
 -- BETWEEN 
-SELECT * FROM bookings WHERE fee BETWEEN 40 AND 50; 
+SELECT * FROM bookings WHERE fee BETWEEN 40 AND 50;
+
 -- من بداية اليوم لبداية اليوم يلي بعدو
 SELECT * FROM bookings
-WHERE appointment_time >= '2026-10-02' AND appointment_time < '2026-10-03'; 
+WHERE appointment_time >= '2026-10-01 00:00:00' AND appointment_time < '2026-10-02 00:00:00';
 
 -- LIKE
-SELECT name FROM patients WHERE name LIKE 'A%';   -- يبدا ب A
-SELECT name FROM patients WHERE name LIKE '%a';    -- ينتهيa
-SELECT name FROM patients WHERE name ILIKE 'a%';   -- ILIKE = بدون حساسية لحالة الأحرف 
+SELECT u.name 
+FROM patients p 
+JOIN users u ON p.user_id = u.id 
+WHERE u.name LIKE 'أ%';
+
+SELECT u.name 
+FROM patients p 
+JOIN users u ON p.user_id = u.id 
+WHERE u.name LIKE '%محمد';
+
+SELECT u.name 
+FROM patients p 
+JOIN users u ON p.user_id = u.id 
+WHERE u.name ILIKE 'a%';   -- ILIKE = بدون حساسية لحالة الأحرف 
+
 -- NULL
-SELECT name FROM patients WHERE phone IS NULL;       
-SELECT name FROM patients WHERE phone IS NOT NULL; 
+SELECT u.name, p.phone 
+FROM patients p 
+JOIN users u ON p.user_id = u.id 
+WHERE p.phone IS NULL;       
+
+SELECT u.name, p.phone 
+FROM patients p 
+JOIN users u ON p.user_id = u.id 
+WHERE p.phone IS NOT NULL;
 
 -- ORDER BY
 -- ترتيب تنازلي مع جعل القيم الفارغة بالاخير
--- NULL LAST
-SELECT name, phone FROM patients 
-ORDER BY phone DESC NULLS LAST;
--- فيني اعمل اولوية بالترتيب في حال كان عندي قيم متساوية فيني اعتمد على عمود تاني 
+SELECT u.name, p.phone 
+FROM patients p 
+JOIN users u ON p.user_id = u.id 
+ORDER BY p.phone DESC NULLS LAST;
+
+-- ترتيب متعدد الأولوية (حسب الأجرة ثم وقت الموعد)
 SELECT id, fee, appointment_time FROM bookings
 ORDER BY fee DESC, appointment_time ASC;
 
 -- LIMIT and Pagination
 SELECT id, fee FROM bookings ORDER BY fee DESC LIMIT 3;
+
 -- offset مشان اعمل الصفحات
 SELECT id FROM bookings ORDER BY id LIMIT 2 OFFSET 0;
-SELECT id FROM bookings ORDER BY id LIMIT 2 OFFSET 2;  
+SELECT id FROM bookings ORDER BY id LIMIT 2 OFFSET 2;
 
 -- Aggregate Functions
 SELECT COUNT(*)            AS total,

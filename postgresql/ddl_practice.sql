@@ -1,52 +1,61 @@
--- CREATE/ALTER/DROP/TRUNCATE
+-- CREATE / ALTER / DROP / TRUNCATE
 
 CREATE TABLE doctors (
-    id        SERIAL PRIMARY KEY,
-    name      TEXT NOT NULL,
-    specialty TEXT DEFAULT 'General'
+    id SERIAL PRIMARY KEY,
+    user_id INT, -- يربط مع جدول users لجلب الاسم والبريد
+    field VARCHAR(100) DEFAULT 'General', -- تم توحيد الاسم من specialty إلى field
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
--- اضافة عمود
+
+-- إضافة عمود جديد
 ALTER TABLE doctors ADD COLUMN phone TEXT;
+
 -- حذف عمود
 ALTER TABLE doctors DROP COLUMN phone;
--- تغيير اسم عمود
-ALTER TABLE doctors RENAME COLUMN specialty TO field;
--- تغيير اسم جدول 
-ALTER TABLE doctors RENAME TO physicians;
--- تغيير نوع العمود
-ALTER TABLE doctors ALTER COLUMN name TYPE VARCHAR(100);
 
--- تغيير القيمة الافتراصية
-ALTER TABLE doctors ALTER COLUMN specialty SET DEFAULT 'Cardiology';
-ALTER TABLE doctors ALTER COLUMN specialty DROP DEFAULT;
--- NOT NULL اضافة قيد
-ALTER TABLE doctors ALTER COLUMN specialty SET NOT NULL;
--- NOT NULL ازالة قيد
-ALTER TABLE doctors ALTER COLUMN specialty DROP NOT NULL;
---  إضافة أو حذف قيود (constraints)
--- (foreign key)
+-- تغيير اسم عمود 
+-- ALTER TABLE doctors RENAME COLUMN field TO doctor_field;
+
+-- تغيير نوع العمود
+ALTER TABLE doctors ALTER COLUMN field TYPE VARCHAR(150);
+
+-- تغيير القيمة الافتراضية لعمود field
+ALTER TABLE doctors ALTER COLUMN field SET DEFAULT 'Cardiology';
+ALTER TABLE doctors ALTER COLUMN field DROP DEFAULT;
+
+-- إضافة أو إزالة قيد NOT NULL
+ALTER TABLE doctors ALTER COLUMN field SET NOT NULL;
+ALTER TABLE doctors ALTER COLUMN field DROP NOT NULL;
+
+-- إضافة قيود مثل Foreign Key 
 ALTER TABLE bookings
 ADD CONSTRAINT fk_bookings_doctor
-FOREIGN KEY (doctor_id) REFERENCES doctors(id);
--- قيد unique
-ALTER TABLE doctors ADD CONSTRAINT uq_doctors_phone UNIQUE (phone);
+FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE;
 
--- حذف قيد
-ALTER TABLE doctors DROP CONSTRAINT uq_doctors_phone;
--- إضافة عمود NOT NULL لجدول فيه صفوف بدها قيمة افتراضية، وإلا بيعطي خطأ لأن الصفوف القديمة ما عندها قيمة:
-  ALTER TABLE doctors ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true;
+-- إضافة قيد UNIQUE (مثلاً على رقم هاتف الطبيب لو أضفناه)
+-- ALTER TABLE doctors ADD COLUMN phone TEXT UNIQUE;
 
---   فيني ضيف alter table داخل transaction
-  BEGIN;
-  ALTER TABLE doctors DROP COLUMN specialty;
-  ROLLBACK; 
+-- إضافة عمود NOT NULL لجدول فيه صفوف سابقة 
+ALTER TABLE doctors ADD COLUMN consultation_room INT NOT NULL DEFAULT 101;
+ALTER TABLE doctors DROP COLUMN consultation_room; -- للتنظيف بعد التجربة
 
 
--- إنشاء index لتسريع البحث
-CREATE INDEX idx_doctors_specialty ON doctors (specialty);
--- حذف كل الصفوف مع إبقاء الجدول
-TRUNCATE TABLE doctors;
--- حذف الجدول نهائياً (بيانات + هيكل)
-DROP TABLE doctors;
+-- 3. ALTER  Transaction  (ROLLBACK)
+BEGIN;
+    ALTER TABLE doctors DROP COLUMN field;
+ROLLBACK;
+
+
+-- 4. Indexes
+CREATE INDEX idx_doctors_field ON doctors (field);
+
+
+-- 5. الحذف 
+-- TRUNCATE TABLE: تفريغ كل البيانات من الجدول مع إبقاء الهيكل (أسرع من DELETE)
+-- TRUNCATE TABLE doctors RESTART IDENTITY CASCADE;
+
+-- DROP TABLE: حذف الجدول بالكامل مع هيكله وبياناته
+-- DROP TABLE IF EXISTS doctors CASCADE;

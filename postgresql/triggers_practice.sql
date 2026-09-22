@@ -1,22 +1,14 @@
--- CREATE OR REPLACE FUNCTION fn_name()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     -- trigger
-    
--- END; -- هنا ينتهي جسم التريغير
--- $$ LANGUAGE plpgsql;
-
+-- 1. دالة لتحديث حقل updated_at تلقائياً عند أي تعديل
 CREATE OR REPLACE FUNCTION fn_set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at := clock_timestamp();
-    RETURN NEW;                
+    RETURN NEW;             
 END;
 $$ LANGUAGE plpgsql;
-
--- هلا بدي اربط التريغير بالجدول 
+-- ربط التريغير بجدول bookings
+DROP TRIGGER IF EXISTS trg_bookings_set_updated_at ON bookings;
 CREATE TRIGGER trg_bookings_set_updated_at
---ايمت ووين لازم يشتغل
 BEFORE UPDATE ON bookings
 FOR EACH ROW
 EXECUTE FUNCTION fn_set_updated_at();
@@ -29,10 +21,10 @@ BEGIN
         IF EXISTS (
             SELECT 1
             FROM bookings b
-            WHERE b.doctor_id        = NEW.doctor_id
+            WHERE b.doctor_id      = NEW.doctor_id
               AND b.appointment_time = NEW.appointment_time
-              AND b.status          <> 'CANCELLED'
-              AND b.id              <> NEW.id      -- ignore the row itself on UPDATE
+              AND b.status         <> 'CANCELLED'
+              AND b.id             <> COALESCE(NEW.id, 0)
         ) THEN
             RAISE EXCEPTION 'Doctor % is already booked at %',
                 NEW.doctor_id, NEW.appointment_time;
@@ -42,14 +34,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_bookings_prevent_double_booking ON bookings;
 CREATE TRIGGER trg_bookings_prevent_double_booking
 BEFORE INSERT OR UPDATE OF doctor_id, appointment_time, status ON bookings
 FOR EACH ROW
 EXECUTE FUNCTION fn_prevent_double_booking();
-
-
-
-
-
-
-

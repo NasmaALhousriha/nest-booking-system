@@ -1,28 +1,39 @@
---    وبصير استدعي بس الاسمviewبدل ما اكتب استعلام طويل وكررو كل مرة بعمل 
--- CREATE VIEW name AS [الاستعلام]
-
+-- 1. 
 CREATE VIEW confirmed_bookings AS
-SELECT b.id
+SELECT b.id, b.appointment_time, b.status
 FROM bookings b
-WHERE b.status = 'CONFIRMED';
+WHERE b.status = 'confirmed';
 
 SELECT * FROM confirmed_bookings;
 
--- ORDER BY/GROUP BY/JOIN/WHERE
+
+-- 2. (JOIN + WHERE + GROUP BY + ORDER BY)
+DROP VIEW IF EXISTS confirmed_bookings CASCADE;
 
 CREATE VIEW confirmed_bookings AS
-SELECT b.id, p.name AS patient, d.name AS doctor, b.appointment_time, b.fee
+SELECT 
+    b.id AS booking_id, 
+    u_pat.name AS patient, 
+    u_doc.name AS doctor, 
+    b.appointment_time, 
+    b.fee,
+    b.status
 FROM bookings b
 JOIN patients p ON p.id = b.patient_id
-JOIN doctors  d ON d.id = b.doctor_id
-WHERE b.status = 'CONFIRMED';
+JOIN users u_pat ON p.user_id = u_pat.id
+JOIN doctors d ON d.id = b.doctor_id
+JOIN users u_doc ON d.user_id = u_doc.id
+WHERE b.status = 'confirmed';
 
-SELECT doctor
+SELECT doctor, COUNT(*) AS total_confirmed_bookings
 FROM confirmed_bookings
 GROUP BY doctor
 ORDER BY doctor;
 
--- rename
+
+-- 3.(Rename)
 ALTER VIEW confirmed_bookings RENAME TO v_confirmed_bookings;
--- drop
-DROP VIEW IF EXISTS v_confirmed_bookings;
+
+
+-- 4. (Drop)
+DROP VIEW IF EXISTS v_confirmed_bookings CASCADE;
