@@ -2,8 +2,8 @@
 
 CREATE TABLE doctors (
     id SERIAL PRIMARY KEY,
-    user_id INT, -- يربط مع جدول users لجلب الاسم والبريد
-    field VARCHAR(100) DEFAULT 'General', -- تم توحيد الاسم من specialty إلى field
+    user_id INT, 
+    field VARCHAR(100) DEFAULT 'General', 
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -35,12 +35,12 @@ ALTER TABLE bookings
 ADD CONSTRAINT fk_bookings_doctor
 FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE;
 
--- إضافة قيد UNIQUE (مثلاً على رقم هاتف الطبيب لو أضفناه)
+-- إضافة قيد UNIQUE 
 -- ALTER TABLE doctors ADD COLUMN phone TEXT UNIQUE;
 
 -- إضافة عمود NOT NULL لجدول فيه صفوف سابقة 
 ALTER TABLE doctors ADD COLUMN consultation_room INT NOT NULL DEFAULT 101;
-ALTER TABLE doctors DROP COLUMN consultation_room; -- للتنظيف بعد التجربة
+ALTER TABLE doctors DROP COLUMN consultation_room; 
 
 
 -- 3. ALTER  Transaction  (ROLLBACK)

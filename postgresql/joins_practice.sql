@@ -24,7 +24,7 @@ FROM users u
 INNER JOIN patients p ON p.user_id = u.id
 LEFT JOIN bookings b ON b.patient_id = p.id;
 
--- 3. RIGHT JOIN: عرض جميع الأطباء مع حجوزاتهم (إن وجدت)، لضمان ظهور كل طبيب حتى لو لم يتم حجز موعد لديه بعد
+-- 3. RIGHT JOIN: 
 SELECT 
     u_doc.name AS doctor_name,
     d.field AS doctor_specialty,
