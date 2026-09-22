@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS bookings CASCADE;
 DROP TABLE IF EXISTS doctors CASCADE;
 DROP TABLE IF EXISTS patients CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS bookings_archive CASCADE;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -52,3 +53,15 @@ CREATE TRIGGER update_bookings_updated_at
     BEFORE UPDATE ON bookings
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+    
+CREATE TABLE IF NOT EXISTS bookings_archive (
+    id INT,
+    doctor_id INT,
+    patient_id INT,
+    appointment_time TIMESTAMP,
+    fee NUMERIC(10, 2),
+    status VARCHAR(50),
+    updated_at TIMESTAMP,
+    created_at TIMESTAMP,
+    archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

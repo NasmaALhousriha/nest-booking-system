@@ -1,6 +1,6 @@
 -- CREATE / ALTER / DROP / TRUNCATE
 
-CREATE TABLE doctors (
+CREATE TABLE  IF NOT EXISTS doctors (
     id SERIAL PRIMARY KEY,
     user_id INT, 
     field VARCHAR(100) DEFAULT 'General', 
