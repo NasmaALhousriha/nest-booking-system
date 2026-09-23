@@ -1,7 +1,3 @@
-
-DROP TRIGGER IF EXISTS update_bookings_updated_at ON bookings CASCADE;
-DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
-
 DROP TABLE IF EXISTS bookings CASCADE;
 DROP TABLE IF EXISTS doctors CASCADE;
 DROP TABLE IF EXISTS patients CASCADE;

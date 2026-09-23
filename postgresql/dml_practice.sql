@@ -1,11 +1,10 @@
 --/ UPDATE / DELETE / MERGE
 
 
--- . UPSERT 
-
+-- . UPDATE 
 UPDATE users 
 SET name = 'Sara Ali' 
-WHERE email = 'sara@clinic.com';
+WHERE email = 'sara@example.com';
 
 
 -- . UPDATE 
@@ -41,40 +40,39 @@ SET fee = CASE
 END;
 
 
--- 9. RETURNING مع الـ UPDATE 
-UPDATE bookings SET status = 'confirmed'
-WHERE id = 3
+-- 9. RETURNING مع الـ UPDATE
+UPDATE bookings SET status = 'cancelled'
+WHERE id = 1
 RETURNING id, status, fee;
 
 
 -- 10. DELETE (الحذف)
 
-DELETE FROM bookings
-WHERE status = 'pending' AND appointment_time < '2026-10-02';
+-- DELETE FROM bookings
+-- WHERE status = 'pending' AND appointment_time < '2026-10-02';
 
 
 -- 11. DELETE ... USING 
-DELETE FROM bookings AS b
-USING doctors AS d
-WHERE b.doctor_id = d.id
-  AND d.is_active = FALSE;
+-- DELETE FROM bookings AS b
+-- USING doctors AS d
+-- WHERE b.doctor_id = d.id
+--   AND d.is_active = FALSE;
 
 
 -- 12. Subquery مع DELETE
-DELETE FROM bookings
-WHERE doctor_id IN (SELECT id FROM doctors WHERE field = 'الجلدية والتجميلية')
-;
+-- DELETE FROM bookings
+-- WHERE doctor_id IN (SELECT id FROM doctors WHERE field = 'الجلدية والتجميلية');
 -- MERGE INTO doctors AS d
 -- USING (VALUES (1, 'الجلدية والتجميلية', TRUE)) AS i(doc_id, new_field, active)
 -- ON d.id = i.doc_id
 -- WHEN MATCHED THEN
 --     UPDATE SET field = i.new_field, is_active = i.is_active;
 
--- 14. Atomic Operation-- 14. Atomic Operation (الحذف مع الأرشيف)
-WITH deleted AS (
-    DELETE FROM bookings
-    WHERE status = 'pending'
-    RETURNING id, doctor_id, patient_id, appointment_time, fee, status, updated_at, created_at
-)
-INSERT INTO bookings_archive (id, doctor_id, patient_id, appointment_time, fee, status, updated_at, created_at)
-SELECT id, doctor_id, patient_id, appointment_time, fee, status, updated_at, created_at FROM deleted;
+-- 14. Atomic Operation (الحذف مع الأرشيف)
+-- WITH deleted AS (
+--     DELETE FROM bookings
+--     WHERE status = 'pending'
+--     RETURNING id, doctor_id, patient_id, appointment_time, fee, status, updated_at, created_at
+-- )
+-- INSERT INTO bookings_archive (id, doctor_id, patient_id, appointment_time, fee, status, updated_at, created_at)
+-- SELECT id, doctor_id, patient_id, appointment_time, fee, status, updated_at, created_at FROM deleted;

@@ -1,15 +1,5 @@
 -- CREATE / ALTER / DROP / TRUNCATE
 
-CREATE TABLE  IF NOT EXISTS doctors (
-    id SERIAL PRIMARY KEY,
-    user_id INT, 
-    field VARCHAR(100) DEFAULT 'General', 
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
-
 -- إضافة عمود جديد
 ALTER TABLE doctors ADD COLUMN phone TEXT;
 
@@ -29,14 +19,6 @@ ALTER TABLE doctors ALTER COLUMN field DROP DEFAULT;
 -- إضافة أو إزالة قيد NOT NULL
 ALTER TABLE doctors ALTER COLUMN field SET NOT NULL;
 ALTER TABLE doctors ALTER COLUMN field DROP NOT NULL;
-
--- إضافة قيود مثل Foreign Key 
-ALTER TABLE bookings
-ADD CONSTRAINT fk_bookings_doctor
-FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE;
-
--- إضافة قيد UNIQUE 
--- ALTER TABLE doctors ADD COLUMN phone TEXT UNIQUE;
 
 -- إضافة عمود NOT NULL لجدول فيه صفوف سابقة 
 ALTER TABLE doctors ADD COLUMN consultation_room INT NOT NULL DEFAULT 101;

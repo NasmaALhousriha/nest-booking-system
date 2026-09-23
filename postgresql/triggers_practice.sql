@@ -1,29 +1,28 @@
--- 1. دالة لتحديث حقل updated_at تلقائياً عند أي تعديل
-CREATE OR REPLACE FUNCTION fn_set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at := clock_timestamp();
-    RETURN NEW;             
-END;
-$$ LANGUAGE plpgsql;
--- ربط التريغير بجدول bookings
-DROP TRIGGER IF EXISTS trg_bookings_set_updated_at ON bookings;
-CREATE TRIGGER trg_bookings_set_updated_at
-BEFORE UPDATE ON bookings
-FOR EACH ROW
-EXECUTE FUNCTION fn_set_updated_at();
+-- CREATE OR REPLACE FUNCTION fn_set_updated_at()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     NEW.updated_at := clock_timestamp();
+--     RETURN NEW;             
+-- END;
+-- $$ LANGUAGE plpgsql;
+-- -- ربط التريغير بجدول bookings
+-- DROP TRIGGER IF EXISTS trg_bookings_set_updated_at ON bookings;
+-- CREATE TRIGGER trg_bookings_set_updated_at
+-- BEFORE UPDATE ON bookings
+-- FOR EACH ROW
+-- EXECUTE FUNCTION fn_set_updated_at();
 
 -- منع الحجز المزدوج
 CREATE OR REPLACE FUNCTION fn_prevent_double_booking()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.doctor_id IS NOT NULL AND NEW.status <> 'CANCELLED' THEN
+    IF NEW.doctor_id IS NOT NULL AND UPPER(NEW.status) <> 'CANCELLED' THEN
         IF EXISTS (
             SELECT 1
             FROM bookings b
             WHERE b.doctor_id      = NEW.doctor_id
               AND b.appointment_time = NEW.appointment_time
-              AND b.status         <> 'CANCELLED'
+              AND UPPER(b.status)  <> 'CANCELLED'
               AND b.id             <> COALESCE(NEW.id, 0)
         ) THEN
             RAISE EXCEPTION 'Doctor % is already booked at %',

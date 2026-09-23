@@ -37,6 +37,8 @@ FROM doctors d
 JOIN users u ON d.user_id = u.id
 WHERE d.is_active = TRUE;
 
+CREATE UNIQUE INDEX idx_active_docs_id ON mv_active_doctors (doctor_id);
+
 --  REFRESH CONCURRENTLY
 REFRESH MATERIALIZED VIEW CONCURRENTLY mv_active_doctors;
 
