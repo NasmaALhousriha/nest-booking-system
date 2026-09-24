@@ -1,8 +1,8 @@
-SELECT CASE WHEN usesuper THEN 'yes' ELSE 'no' END AS is_superuser
+SELECT usesuper AS is_super
 FROM pg_user
 WHERE usename = current_user \gset
 
-\if :is_superuser
+\if :is_super
 
     -- 1/
     DROP EXTENSION IF EXISTS postgres_fdw CASCADE;

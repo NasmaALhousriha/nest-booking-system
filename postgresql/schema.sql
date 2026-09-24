@@ -37,8 +37,6 @@ CREATE TABLE bookings (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- حماية جزئية: تمنع الحجز المزدوج على نفس الطبيب بنفس الوقت (للحجوزات الفعالة بس)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_active_bookings
 ON bookings (doctor_id, appointment_time)
 WHERE status <> 'cancelled';

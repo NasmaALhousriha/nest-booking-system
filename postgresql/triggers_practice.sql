@@ -39,7 +39,6 @@ CREATE TRIGGER trg_bookings_prevent_double_booking
     FOR EACH ROW
     EXECUTE FUNCTION fn_prevent_double_booking();
 
--- تيست: لو الترIGGER شغال بيمنع الحجز المزدوج
 DO $$
 DECLARE
     v_inserted BOOLEAN := FALSE;

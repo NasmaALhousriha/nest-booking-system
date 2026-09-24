@@ -27,7 +27,7 @@ WITH RECURSIVE numbers AS (
 SELECT * FROM numbers;
 
 
--- 2. شجرة الاختصاصات (parent_id)
+-- 2
 DROP TABLE IF EXISTS specializations CASCADE;
 CREATE TABLE specializations (
     id INT PRIMARY KEY,
