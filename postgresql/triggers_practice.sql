@@ -35,6 +35,24 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_bookings_prevent_double_booking ON bookings;
 CREATE TRIGGER trg_bookings_prevent_double_booking
-BEFORE INSERT OR UPDATE OF doctor_id, appointment_time, status ON bookings
-FOR EACH ROW
-EXECUTE FUNCTION fn_prevent_double_booking();
+    BEFORE INSERT OR UPDATE OF doctor_id, appointment_time, status ON bookings
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_prevent_double_booking();
+
+-- تيست: لو الترIGGER شغال بيمنع الحجز المزدوج
+DO $$
+DECLARE
+    v_inserted BOOLEAN := FALSE;
+BEGIN
+    BEGIN
+        INSERT INTO bookings (doctor_id, patient_id, appointment_time, fee, status)
+        VALUES (1, 1, '2026-10-01 10:00:00', 50.00, 'pending');
+        v_inserted := TRUE;
+    EXCEPTION WHEN others THEN
+        RAISE NOTICE 'TEST PASSED: duplicate booking was rejected.';
+    END;
+    IF v_inserted THEN
+        RAISE EXCEPTION 'TEST FAILED: duplicate booking was accepted — trigger/index did not block it.';
+    END IF;
+END;
+$$;

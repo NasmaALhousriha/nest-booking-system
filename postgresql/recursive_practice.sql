@@ -27,21 +27,25 @@ WITH RECURSIVE numbers AS (
 SELECT * FROM numbers;
 
 
--- 2
-WITH RECURSIVE numbered_users AS (
-    SELECT id, name, email, 
-           ROW_NUMBER() OVER (ORDER BY id) as row_num
-    FROM users
-),
-user_hierarchy AS (
-    SELECT id, name, email, 1 AS level, row_num
-    FROM numbered_users
-    WHERE row_num = 1
-    
+-- 2. شجرة الاختصاصات (parent_id)
+DROP TABLE IF EXISTS specializations CASCADE;
+CREATE TABLE specializations (
+    id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    parent_id INT REFERENCES specializations(id)
+);
+INSERT INTO specializations (id, name, parent_id) VALUES
+(1, 'الطب', NULL),
+(2, 'الجلدية', 1),
+(3, 'التجميلية', 1),
+(4, 'جراحات الجلد', 2);
+WITH RECURSIVE spec_tree AS (
+    SELECT id, name, parent_id, 1 AS level, name AS path
+    FROM specializations
+    WHERE parent_id IS NULL
     UNION ALL
-    
-    SELECT nu.id, nu.name, nu.email, h.level + 1, nu.row_num
-    FROM numbered_users nu
-    JOIN user_hierarchy h ON nu.row_num = h.row_num + 1
+    SELECT s.id, s.name, s.parent_id, st.level + 1, st.path || ' > ' || s.name
+    FROM specializations s
+    JOIN spec_tree st ON s.parent_id = st.id
 )
-SELECT id, name, email, level FROM user_hierarchy;
+SELECT id, name, level, path FROM spec_tree ORDER BY path;

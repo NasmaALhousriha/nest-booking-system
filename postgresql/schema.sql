@@ -31,11 +31,17 @@ CREATE TABLE bookings (
     doctor_id INT REFERENCES doctors(id) ON DELETE CASCADE,
     patient_id INT REFERENCES patients(id) ON DELETE CASCADE,
     appointment_time TIMESTAMP NOT NULL,
-    fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-    status VARCHAR(50) DEFAULT 'pending',
+    fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00 CHECK (fee >= 0),
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- حماية جزئية: تمنع الحجز المزدوج على نفس الطبيب بنفس الوقت (للحجوزات الفعالة بس)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_active_bookings
+ON bookings (doctor_id, appointment_time)
+WHERE status <> 'cancelled';
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
