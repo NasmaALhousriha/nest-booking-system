@@ -40,7 +40,7 @@ INSERT INTO specializations (id, name, parent_id) VALUES
 (3, 'التجميلية', 1),
 (4, 'جراحات الجلد', 2);
 WITH RECURSIVE spec_tree AS (
-    SELECT id, name, parent_id, 1 AS level, name AS path
+    SELECT id, name, parent_id, 1 AS level, name::text AS path
     FROM specializations
     WHERE parent_id IS NULL
     UNION ALL

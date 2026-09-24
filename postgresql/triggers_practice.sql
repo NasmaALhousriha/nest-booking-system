@@ -45,7 +45,7 @@ DECLARE
 BEGIN
     BEGIN
         INSERT INTO bookings (doctor_id, patient_id, appointment_time, fee, status)
-        VALUES (1, 1, '2026-10-01 10:00:00', 50.00, 'pending');
+        VALUES (2, 1, '2026-10-01 11:30:00', 50.00, 'pending');
         v_inserted := TRUE;
     EXCEPTION WHEN others THEN
         RAISE NOTICE 'TEST PASSED: duplicate booking was rejected.';

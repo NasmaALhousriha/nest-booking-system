@@ -63,13 +63,12 @@ BEGIN;
     DELETE FROM bookings
     WHERE doctor_id IN (SELECT id FROM doctors WHERE field = 'الجلدية والتجميلية');
 
-    -- 13. MERGE (تحديث مع شرط)
+    -- 13. MERGE (تحديث مع شرط) - UPDATE FROM بالـ VALUES
     MERGE INTO doctors AS d
     USING (VALUES (1, 'الجلدية والتجميلية', TRUE)) AS i(doc_id, new_field, is_active)
     ON d.id = i.doc_id
     WHEN MATCHED THEN
-        UPDATE SET field = i.new_field, is_active = i.is_active;
-
+     UPDATE SET field = i.new_field, is_active = i.is_active;
     -- 14. Atomic Operation 
     WITH deleted AS (
         DELETE FROM bookings
