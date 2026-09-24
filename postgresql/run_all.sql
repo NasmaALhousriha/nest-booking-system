@@ -35,5 +35,4 @@
 \echo '11. Running Foreign Tables (SQL/MED)...'
 \ir foreign_table.sql
 
-SELECT version() AS ver \gset
-\echo 'All scripts executed successfully on :ver'
+\echo 'All scripts executed successfully on PostgreSQL 18!'
