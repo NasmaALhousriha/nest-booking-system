@@ -1,5 +1,6 @@
--- تنفيذ جميع السكريبتات بالترتيب الصحيح داخل مجلد postgresql
-\set ON_ERROR_STOP on
+\encoding UTF8
+
+\pset pager off
 
 \echo '1. Creating Schema...'
 \ir schema.sql

@@ -1,24 +1,27 @@
+SELECT CASE WHEN usesuper THEN 'yes' ELSE 'no' END AS is_superuser
+FROM pg_user
+WHERE usename = current_user \gset
 
-\if (SELECT usesuper FROM pg_user WHERE usename = current_user)
+\if :is_superuser
 
-    -- 1/ 
+    -- 1/
     DROP EXTENSION IF EXISTS postgres_fdw CASCADE;
 
     -- 2/ 
     CREATE EXTENSION IF NOT EXISTS postgres_fdw;
 
-    -- 3/
-    CREATE SERVER clinic_archive_server
+    -- 3/ 
+        CREATE SERVER clinic_archive_server
         FOREIGN DATA WRAPPER postgres_fdw
         OPTIONS (host 'localhost', port '5432', dbname 'clinic_archive');
 
     -- 4/ 
-        CREATE USER MAPPING FOR CURRENT_USER
+    CREATE USER MAPPING FOR CURRENT_USER
         SERVER clinic_archive_server
         OPTIONS (user 'archive_reader', password 'archive_pass');
 
-    -- 5/ Foreign Table
-    CREATE FOREIGN TABLE archived_clinic_bookings (
+    -- 5/ 
+        CREATE FOREIGN TABLE archived_clinic_bookings (
         booking_id       INT,
         patient_name     VARCHAR(150),
         doctor_name      VARCHAR(150),
@@ -29,8 +32,11 @@
     SERVER clinic_archive_server
     OPTIONS (schema_name 'public', table_name 'old_bookings');
 
-    -- 6/
-    \if (SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = 'clinic_archive'))
+
+    SELECT CASE WHEN EXISTS (SELECT 1 FROM pg_database WHERE datname = 'clinic_archive')
+                THEN 'yes' ELSE 'no' END AS archive_ready \gset
+
+    \if :archive_ready
 
         SELECT * FROM archived_clinic_bookings WHERE status = 'confirmed';
 
